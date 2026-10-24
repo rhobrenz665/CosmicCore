@@ -1,0 +1,24 @@
+# Local secrets and environment overrides
+.env
+.env.*
+!.env.example
+**/secrets.json
+
+# .NET build output and IDE files
+**/bin/
+**/obj/
+**/.vs/
+*.user
+*.suo
+
+# JavaScript dependencies and build output
+**/node_modules/
+**/dist/
+**/.vite/
+
+# macOS and editor files
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
