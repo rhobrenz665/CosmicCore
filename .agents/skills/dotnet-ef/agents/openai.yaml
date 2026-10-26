@@ -1,0 +1,3 @@
+interface:
+  display_name: ".NET + EF Core"
+  short_description: "Work on the .NET backend and SQLite data layer"

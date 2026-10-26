@@ -4,7 +4,7 @@ public sealed class KnowledgeDocument
 {
     private KnowledgeDocument() { }
 
-    public KnowledgeDocument(Guid id, string title, string content, string? sourceUrl, DateTimeOffset createdAt)
+    public KnowledgeDocument(Guid id, string title, string content, string? sourceUrl, DateTime createdAt)
     {
         Id = id;
         Rename(title);
@@ -18,10 +18,10 @@ public sealed class KnowledgeDocument
     public string Title { get; private set; } = string.Empty;
     public string Content { get; private set; } = string.Empty;
     public string? SourceUrl { get; private set; }
-    public DateTimeOffset CreatedAt { get; private set; }
-    public DateTimeOffset UpdatedAt { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public DateTime UpdatedAt { get; private set; }
 
-    public void Update(string title, string content, string? sourceUrl, DateTimeOffset updatedAt)
+    public void Update(string title, string content, string? sourceUrl, DateTime updatedAt)
     {
         Rename(title);
         UpdateContent(content);

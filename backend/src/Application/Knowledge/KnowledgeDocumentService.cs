@@ -2,7 +2,7 @@ using CosmicCore.Domain.Knowledge;
 
 namespace CosmicCore.Application.Knowledge;
 
-public sealed record KnowledgeDocumentData(Guid Id, string Title, string Content, string? SourceUrl, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+public sealed record KnowledgeDocumentData(Guid Id, string Title, string Content, string? SourceUrl, DateTime CreatedAt, DateTime UpdatedAt);
 
 public sealed class KnowledgeDocumentService(IKnowledgeDocumentRepository repository, TimeProvider timeProvider)
 {
@@ -14,7 +14,7 @@ public sealed class KnowledgeDocumentService(IKnowledgeDocumentRepository reposi
 
     public async Task<KnowledgeDocumentData> CreateAsync(string title, string content, string? sourceUrl, CancellationToken cancellationToken)
     {
-        var now = timeProvider.GetUtcNow();
+        var now = timeProvider.GetUtcNow().UtcDateTime;
         var document = new KnowledgeDocument(Guid.NewGuid(), title, content, sourceUrl, now);
         await repository.AddAsync(document, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
@@ -25,7 +25,7 @@ public sealed class KnowledgeDocumentService(IKnowledgeDocumentRepository reposi
     {
         var document = await repository.FindAsync(id, cancellationToken);
         if (document is null) return null;
-        document.Update(title, content, sourceUrl, timeProvider.GetUtcNow());
+        document.Update(title, content, sourceUrl, timeProvider.GetUtcNow().UtcDateTime);
         await repository.SaveChangesAsync(cancellationToken);
         return ToData(document);
     }

@@ -12,6 +12,7 @@ public sealed class CosmicCoreDbContext(DbContextOptions<CosmicCoreDbContext> op
         var document = modelBuilder.Entity<KnowledgeDocument>();
         document.ToTable("KnowledgeDocuments");
         document.HasKey(x => x.Id);
+        document.Property(x => x.Id).ValueGeneratedNever();
         document.Property(x => x.Title).HasMaxLength(200).IsRequired();
         document.Property(x => x.Content).IsRequired();
         document.Property(x => x.SourceUrl).HasMaxLength(2048);

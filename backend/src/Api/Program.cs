@@ -1,20 +1,60 @@
 using CosmicCore.Application.Knowledge;
 using CosmicCore.Infrastructure.Persistence;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("CosmicCore")
-    ?? string.Empty;
-if (string.IsNullOrWhiteSpace(connectionString))
-    throw new InvalidOperationException("Configure the CosmicCore connection string with ConnectionStrings__CosmicCore.");
+var configuredConnectionString = builder.Configuration.GetConnectionString("CosmicCore");
+SqliteConnectionStringBuilder connectionStringBuilder;
+if (string.IsNullOrWhiteSpace(configuredConnectionString))
+{
+    var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    if (string.IsNullOrWhiteSpace(localApplicationData))
+        throw new InvalidOperationException("Could not determine the local application data directory.");
 
-builder.Services.AddDbContext<CosmicCoreDbContext>(options => options.UseSqlServer(connectionString));
+    var dataDirectory = Path.Combine(localApplicationData, "CosmicCore");
+    Directory.CreateDirectory(dataDirectory);
+    connectionStringBuilder = new SqliteConnectionStringBuilder
+    {
+        DataSource = Path.Combine(dataDirectory, "cosmiccore.db")
+    };
+}
+else
+{
+    connectionStringBuilder = new SqliteConnectionStringBuilder(configuredConnectionString);
+    if (connectionStringBuilder.DataSource != ":memory:" && !connectionStringBuilder.DataSource.StartsWith("file:", StringComparison.OrdinalIgnoreCase))
+    {
+        var databaseDirectory = Path.GetDirectoryName(Path.GetFullPath(connectionStringBuilder.DataSource));
+        if (!string.IsNullOrEmpty(databaseDirectory))
+            Directory.CreateDirectory(databaseDirectory);
+    }
+}
+
+connectionStringBuilder.ForeignKeys = true;
+connectionStringBuilder.DefaultTimeout = 5;
+
+builder.Services.AddDbContext<CosmicCoreDbContext>(options => options.UseSqlite(connectionStringBuilder.ToString()));
 builder.Services.AddScoped<IKnowledgeDocumentRepository, KnowledgeDocumentRepository>();
 builder.Services.AddScoped<KnowledgeDocumentService>();
 builder.Services.AddSingleton(TimeProvider.System);
 
 var app = builder.Build();
+
+await using (var sqliteConnection = new SqliteConnection(connectionStringBuilder.ToString()))
+{
+    await sqliteConnection.OpenAsync();
+    await using var pragma = sqliteConnection.CreateCommand();
+    pragma.CommandText = "PRAGMA journal_mode=WAL;";
+    await pragma.ExecuteScalarAsync();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<CosmicCoreDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
     .WithName("HealthCheck");

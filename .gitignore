@@ -16,6 +16,11 @@
 **/dist/
 **/.vite/
 
+# Local SQLite databases and write-ahead logs
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
 # macOS and editor files
 .DS_Store
 .idea/
